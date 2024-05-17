@@ -1,21 +1,19 @@
 import gleam/dynamic
 import gleam/json
 import gleam/result
-import gleam/string_builder
 
 import app/errors
 
-pub type Model {
-  Model(name: String, email: String, body: String)
+pub type Comment {
+  Comment(name: String, email: String, body: String)
 }
 
-pub fn encode(comment: Model) -> string_builder.StringBuilder {
+pub fn encode(comment: Comment) -> json.Json {
   json.object([
     #("Name", json.string(comment.name)),
     #("Email", json.string(comment.email)),
     #("Kommentar", json.string(comment.body)),
   ])
-  |> json.to_string_builder
 }
 
 pub fn decoder_type() {
@@ -24,21 +22,17 @@ pub fn decoder_type() {
 
 pub fn decoder() {
   dynamic.decode3(
-    Model,
+    Comment,
     dynamic.field("name", of: dynamic.string),
     dynamic.field("email", of: dynamic.string),
     dynamic.field("body", of: dynamic.string),
   )
 }
 
-pub fn decode_any(a, using decoder: dynamic.Decoder(t)) {
-  let value = dynamic.from(a)
-  decoder(value)
-}
-
-pub fn decode_json(json_string: String) -> Result(Model, errors.ApiError) {
-  let comment_decoder = decoder()
-
-  json.decode(from: json_string, using: comment_decoder)
+pub fn decode_json(
+  json_string: String,
+  decoder: dynamic.Decoder(t),
+) -> Result(t, errors.ApiError) {
+  json.decode(from: json_string, using: decoder)
   |> result.map_error(errors.JsonDecodeError)
 }
